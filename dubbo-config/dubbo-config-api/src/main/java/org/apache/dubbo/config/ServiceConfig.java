@@ -191,6 +191,23 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         return unexported;
     }
 
+    /**
+     * 基于扩展点自适应机制
+     * 先暴露registry://协议头，则调用RegistryProtocol
+     * 再暴露dubbo://协议，则调用DubboProtocol
+     *
+     * 先调用RegistryProtocol
+     * @see org.apache.dubbo.registry.integration.RegistryProtocol
+     * 的export()方法
+     * @see org.apache.dubbo.registry.integration.RegistryProtocol#export(Invoker)
+     * 完成服务注册
+     *
+     * 再调用DubboProtocol（hessian、http、rmi…）
+     * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+     * 的export()方法
+     * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#export(Invoker)
+     * 打开服务端口
+     */
     public synchronized void export() {
         if (provider != null) {
             if (export == null) {

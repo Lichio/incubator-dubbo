@@ -122,11 +122,19 @@ public class RegistryProtocol implements Protocol {
         return overrideListeners;
     }
 
+    /* 将服务提供者注册到注册中心 */
     public void register(URL registryUrl, URL registedProviderUrl) {
         Registry registry = registryFactory.getRegistry(registryUrl);
         registry.register(registedProviderUrl);
     }
 
+    /**
+     * 通过调用Registry
+     * @see org.apache.dubbo.registry.Registry
+     * 的register()方法
+     * @see org.apache.dubbo.registry.Registry#register(URL)
+     * 进行服务注册
+     */
     @Override
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
         //export invoker

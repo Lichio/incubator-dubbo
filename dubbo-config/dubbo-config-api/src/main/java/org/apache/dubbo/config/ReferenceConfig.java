@@ -31,6 +31,7 @@ import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Protocol;
 import org.apache.dubbo.rpc.ProxyFactory;
 import org.apache.dubbo.rpc.cluster.Cluster;
+import org.apache.dubbo.rpc.cluster.Directory;
 import org.apache.dubbo.rpc.cluster.directory.StaticDirectory;
 import org.apache.dubbo.rpc.cluster.support.AvailableCluster;
 import org.apache.dubbo.rpc.cluster.support.ClusterUtils;
@@ -304,6 +305,29 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         ApplicationModel.initConsumerModel(getUniqueServiceName(), consumerModel);
     }
 
+    /**
+     * 基于扩展点自适应机制
+     * 先暴露registry://协议头，则调用RegistryProtocol
+     * 再暴露dubbo://协议，则调用DubboProtocol
+     *
+     * 先通过RegistryProtocol
+     * @see org.apache.dubbo.registry.integration.RegistryProtocol
+     * 的refer()方法
+     * @see org.apache.dubbo.registry.integration.RegistryProtocol#refer(Class, URL)
+     * 获取提供者URL
+     *
+     * 再调用DubboProtocol（hessian、http、rmi…）
+     * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
+     * 的refer()方法
+     * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#refer(Class, URL)
+     * 获取提供者引用
+     *
+     * 最后RegistryProtocol通过Cluster扩展点
+     * @see org.apache.dubbo.rpc.cluster.Cluster
+     * 的join()方法
+     * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
+     * 将多个提供者引用伪装成一个提供者引用返回（实现路由及负载均衡）
+     */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
         URL tmpUrl = new URL("temp", "localhost", 0, map);

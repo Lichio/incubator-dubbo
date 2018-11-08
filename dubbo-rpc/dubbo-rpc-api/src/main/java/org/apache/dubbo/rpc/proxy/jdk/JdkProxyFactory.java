@@ -26,7 +26,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
 /**
- * JavaassistRpcProxyFactory
+ * Javaassist RpcProxyFactory
  */
 public class JdkProxyFactory extends AbstractProxyFactory {
 

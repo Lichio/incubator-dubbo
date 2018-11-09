@@ -22,6 +22,10 @@ import org.apache.dubbo.common.extension.Adaptive;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 网络传输扩展点
+ * 远程通讯的服务器及客户端传输实现
+ * 抽象 mina 和 netty 为统一接口
+ *
  * Transporter. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Transport_Layer">Transport Layer</a>

@@ -17,6 +17,9 @@
 package org.apache.dubbo.common.extension;
 
 /**
+ * 扩展点加载扩展点
+ * 扩展点本身的加载容器，可从不同容器加载扩展点
+ *
  * ExtensionFactory
  */
 @SPI

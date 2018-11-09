@@ -25,6 +25,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
+ * 序列化扩展点
+ * 将对象转成字节流，用于网络传输；将字节流转为对象，用于在收到字节流数据后还原成对象
+ * @see ObjectInput
+ * @see ObjectOutput
+ *
  * Serialization. (SPI, Singleton, ThreadSafe)
  */
 @SPI("hessian2")

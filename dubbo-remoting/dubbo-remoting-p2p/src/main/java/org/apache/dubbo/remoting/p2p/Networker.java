@@ -21,6 +21,9 @@ import org.apache.dubbo.common.extension.SPI;
 import org.apache.dubbo.remoting.RemotingException;
 
 /**
+ * 组网扩展点
+ * 对等网络节点组网器
+ *
  * Networker. (SPI, Singleton, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Peer-to-peer">Peer-to-peer</a>

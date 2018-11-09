@@ -19,6 +19,9 @@ package org.apache.dubbo.rpc;
 import org.apache.dubbo.common.Node;
 
 /**
+ * 可执行的对象，执行具体的远程调用，能够根据方法名称，参数得到相应的执行结果。
+ * Invocation：包含了需要执行的方法，参数等信息。目前实现类只有RpcInvocation。
+ *
  * Invoker. (API/SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.rpc.Protocol#refer(Class, org.apache.dubbo.common.URL)

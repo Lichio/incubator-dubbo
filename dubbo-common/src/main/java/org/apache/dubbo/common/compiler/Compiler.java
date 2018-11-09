@@ -20,6 +20,9 @@ package org.apache.dubbo.common.compiler;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 编译器扩展点
+ * Java代码编译器，用于动态生成字节码，加速调用
+ *
  * Compiler. (SPI, Singleton, ThreadSafe)
  */
 @SPI("javassist")

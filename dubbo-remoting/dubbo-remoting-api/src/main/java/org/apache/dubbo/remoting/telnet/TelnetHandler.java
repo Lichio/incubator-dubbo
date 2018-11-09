@@ -21,6 +21,9 @@ import org.apache.dubbo.remoting.Channel;
 import org.apache.dubbo.remoting.RemotingException;
 
 /**
+ * Telnet命令扩展
+ * 所有服务器均支持telnet访问，用于人工干预
+ *
  * TelnetHandler
  */
 @SPI

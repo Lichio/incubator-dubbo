@@ -19,6 +19,10 @@ package org.apache.dubbo.rpc;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 调用拦截扩展点
+ * 服务提供方和服务消费方调用过程拦截，Dubbo本身大多数功能基于此扩展点实现
+ * 每次远程方法执行，该拦截都会被执行
+ *
  * Filter. (SPI, Singleton, ThreadSafe)
  */
 @SPI

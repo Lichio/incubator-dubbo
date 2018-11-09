@@ -24,6 +24,9 @@ import org.apache.dubbo.rpc.RpcException;
 import java.util.List;
 
 /**
+ * 路由扩展点
+ * 路由规则，决定一次dubbo服务调用的目标服务器
+ *
  * Router. (SPI, Prototype, ThreadSafe)
  * <p>
  * <a href="http://en.wikipedia.org/wiki/Routing">Routing</a>

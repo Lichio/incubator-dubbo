@@ -24,6 +24,9 @@ import org.apache.dubbo.common.extension.SPI;
 import java.util.concurrent.Executor;
 
 /**
+ * 线程池扩展点
+ * 服务提供方线程实现策略，当服务器接收到一个请求时，需要在线程池中创建一个线程去执行服务提供方业务逻辑
+ *
  * ThreadPool
  */
 @SPI("fixed")

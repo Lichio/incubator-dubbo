@@ -19,6 +19,9 @@ package org.apache.dubbo.rpc;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 暴露监听扩展点
+ * 当有服务暴露时，触发该事件
+ *
  * ExporterListener. (SPI, Singleton, ThreadSafe)
  */
 @SPI

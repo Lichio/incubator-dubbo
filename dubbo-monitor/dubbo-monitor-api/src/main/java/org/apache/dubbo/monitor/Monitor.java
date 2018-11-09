@@ -19,6 +19,9 @@ package org.apache.dubbo.monitor;
 import org.apache.dubbo.common.Node;
 
 /**
+ * 监控中心扩展点
+ * 负责服务调用次数和调用时间的监控
+ *
  * Monitor. (SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.monitor.MonitorFactory#getMonitor(org.apache.dubbo.common.URL)

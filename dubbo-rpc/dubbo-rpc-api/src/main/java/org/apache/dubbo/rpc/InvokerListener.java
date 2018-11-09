@@ -19,6 +19,9 @@ package org.apache.dubbo.rpc;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 引用监听扩展点
+ * 当有服务引用时，触发该事件
+ *
  * InvokerListener. (SPI, Singleton, ThreadSafe)
  */
 @SPI

@@ -31,6 +31,8 @@ import org.apache.dubbo.rpc.listener.ListenerInvokerWrapper;
 import java.util.Collections;
 
 /**
+ * 负责初始化 暴露和引用服务 的监听器
+ *
  * ListenerProtocol
  */
 public class ProtocolListenerWrapper implements Protocol {
@@ -51,9 +53,15 @@ public class ProtocolListenerWrapper implements Protocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // Registry类型的Invoker不做处理
         if (Constants.REGISTRY_PROTOCOL.equals(invoker.getUrl().getProtocol())) {
             return protocol.export(invoker);
         }
+        // 其他具体协议类型的Invoker
+        // 先进行导出protocol.export(invoker)
+        // 然后获取自适应的监听器
+        // 最后返回的是包装了监听器的Exporter
+        // 这里监听器的获取是getActivateExtension，如果指定了listener就加载实现，没有指定就不加载
         return new ListenerExporterWrapper<T>(protocol.export(invoker),
                 Collections.unmodifiableList(ExtensionLoader.getExtensionLoader(ExporterListener.class)
                         .getActivateExtension(invoker.getUrl(), Constants.EXPORTER_LISTENER_KEY)));

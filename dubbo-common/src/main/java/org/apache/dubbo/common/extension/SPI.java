@@ -24,6 +24,8 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 被此注解标记的接口，就表示是一个可扩展的接口。
+ *
  * Marker for extension interface
  * <p/>
  * Changes on extension configuration file <br/>

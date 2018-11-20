@@ -25,6 +25,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 主要用处是标注在插件接口实现类/方法上，用来配置该扩展实现类的激活条件。
+ * 在Dubbo框架里面的Filter的各种实现类都通过Activate标注，用来描述该Filter什么时候生效。
+ * 比如MonitorFilter通过Activate标注用来告诉Dubbo框架这个Filter是在服务提供端和消费端会生效的；
+ * 而TimeoutFilter则是只在服务提供端生效，消费端是不会调用该Filter。
+ *
  * Activate. This annotation is useful for automatically activate certain extensions with the given criteria,
  * for examples: <code>@Activate</code> can be used to load certain <code>Filter</code> extension when there are
  * multiple implementations.

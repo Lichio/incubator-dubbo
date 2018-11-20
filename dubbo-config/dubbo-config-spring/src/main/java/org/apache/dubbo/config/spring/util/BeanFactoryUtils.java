@@ -96,6 +96,7 @@ public class BeanFactoryUtils {
     public static boolean addApplicationListener(ApplicationContext applicationContext, ApplicationListener listener) {
         try {
             // backward compatibility to spring 2.0.1
+            // Add a new ApplicationListener that will be notified on context events such as context refresh and context shutdown.
             Method method = applicationContext.getClass().getMethod("addApplicationListener", ApplicationListener.class);
             method.invoke(applicationContext, listener);
             return true;

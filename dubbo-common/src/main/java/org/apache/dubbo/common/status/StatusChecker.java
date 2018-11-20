@@ -19,6 +19,9 @@ package org.apache.dubbo.common.status;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 状态检查扩展点
+ * 检查服务依赖各种资源的状态，此状态检查可同时用于telnet的status命令和hosting的status页面
+ *
  * StatusChecker
  */
 @SPI

@@ -25,6 +25,10 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * 当调用ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension()的时候将会返回AdaptiveExtensionFactory实体，
+ * 用来适配ExtensionFactory接口的SPIExtensionFactory和SpringExtensionFactory两种实现，
+ * 然后AdaptiveExtensionFactory将会根据运行时的状态来确定具体调用ExtensionFactory的哪个实现。
+ *
  * AdaptiveExtensionFactory
  */
 @Adaptive

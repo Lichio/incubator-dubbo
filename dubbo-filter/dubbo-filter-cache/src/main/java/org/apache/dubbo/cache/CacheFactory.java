@@ -22,6 +22,9 @@ import org.apache.dubbo.common.extension.SPI;
 import org.apache.dubbo.rpc.Invocation;
 
 /**
+ * 缓存扩展点
+ * 用请求参数作为key，缓存返回结果
+ *
  * CacheFactory
  */
 @SPI("lru")

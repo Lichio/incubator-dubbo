@@ -21,6 +21,8 @@ import org.apache.dubbo.common.extension.SPI;
 import java.io.File;
 
 /**
+ * 日志输出扩展点
+ *
  * Logger provider
  */
 @SPI

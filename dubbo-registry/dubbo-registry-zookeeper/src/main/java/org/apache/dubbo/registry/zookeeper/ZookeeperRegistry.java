@@ -61,12 +61,16 @@ public class ZookeeperRegistry extends FailbackRegistry {
         if (url.isAnyHost()) {
             throw new IllegalStateException("registry address == null");
         }
+
+        // 注册中心分组信息
         String group = url.getParameter(Constants.GROUP_KEY, DEFAULT_ROOT);
         if (!group.startsWith(Constants.PATH_SEPARATOR)) {
             group = Constants.PATH_SEPARATOR + group;
         }
         this.root = group;
+        // 创建zkClient实例
         zkClient = zookeeperTransporter.connect(url);
+        // 添加状态变更监听器
         zkClient.addStateListener(new StateListener() {
             @Override
             public void stateChanged(int state) {
@@ -111,6 +115,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
     @Override
     protected void doRegister(URL url) {
         try {
+            // 开始注册，即在Zookeeper中创建节点
+            // 默认节点为 临时节点
             zkClient.create(toUrlPath(url), url.getParameter(Constants.DYNAMIC_KEY, true));
         } catch (Throwable e) {
             throw new RpcException("Failed to register " + url + " to zookeeper " + getUrl() + ", cause: " + e.getMessage(), e);
@@ -269,6 +275,23 @@ public class ZookeeperRegistry extends FailbackRegistry {
         return toServicePath(url) + Constants.PATH_SEPARATOR + url.getParameter(Constants.CATEGORY_KEY, Constants.DEFAULT_CATEGORY);
     }
 
+    /**
+     * Dubbo在Zookeeper上的所有数据都按照如下目录结构进行存储
+     *
+     * /dubbo(group，default：dubbo)
+     *      /com.lichaojie.user.Service1(serviceInterface)
+     *          /consumers(category)
+     *          /routers(category)
+     *          /providers(category)
+     *          /configurators(category)
+     *      /com.lichaojie.user.Service2
+     *          /consumers
+     *          /routers
+     *          /providers
+     *          /configurators
+     * @param url
+     * @return
+     */
     private String toUrlPath(URL url) {
         return toCategoryPath(url) + Constants.PATH_SEPARATOR + URL.encode(url.toFullString());
     }

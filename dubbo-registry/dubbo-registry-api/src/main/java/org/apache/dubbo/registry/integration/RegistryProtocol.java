@@ -67,6 +67,10 @@ public class RegistryProtocol implements Protocol {
     private final Map<String, ExporterChangeableWrapper<?>> bounds = new ConcurrentHashMap<String, ExporterChangeableWrapper<?>>();
     private Cluster cluster;
     private Protocol protocol;
+
+    /**
+     * registryFactory是动态生成的代码，代码见文件末尾
+     */
     private RegistryFactory registryFactory;
     private ProxyFactory proxyFactory;
 
@@ -140,10 +144,14 @@ public class RegistryProtocol implements Protocol {
         //export invoker
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker);
 
+        //注册中心的url
         URL registryUrl = getRegistryUrl(originInvoker);
 
         //registry provider
+        //根据invoker中的url获取Registry实例
         final Registry registry = getRegistry(originInvoker);
+
+        //需要注册到注册中心的提供者URL
         final URL registeredProviderUrl = getRegisteredProviderUrl(originInvoker);
 
         //to judge to delay publish whether or not
@@ -174,8 +182,16 @@ public class RegistryProtocol implements Protocol {
             synchronized (bounds) {
                 exporter = (ExporterChangeableWrapper<T>) bounds.get(key);
                 if (exporter == null) {
+                    // 得到一个Invoker代理，里面包含原来的Invoker
                     final Invoker<?> invokerDelegete = new InvokerDelegete<T>(originInvoker, getProviderUrl(originInvoker));
+
+                    // 此处protocol还是ServiceConfig中的protocol（代码为自动生成），调用代码中的export方法，
+                    // 会根据协议名选择调用具体的实现类
+                    // 这里我们需要调用DubboProtocol的export方法
+                    // 这里使用具体协议进行导出的invoker是个代理invoker
+                    // 导出完之后，返回一个新的ExporterChangeableWrapper实例
                     exporter = new ExporterChangeableWrapper<T>((Exporter<T>) protocol.export(invokerDelegete), originInvoker);
+
                     bounds.put(key, exporter);
                 }
             }
@@ -209,6 +225,8 @@ public class RegistryProtocol implements Protocol {
      */
     private Registry getRegistry(final Invoker<?> originInvoker) {
         URL registryUrl = getRegistryUrl(originInvoker);
+
+        //根据SPI机制获取具体的Registry实例，默认为 dubbo 即 DubboRegistry
         return registryFactory.getRegistry(registryUrl);
     }
 
@@ -525,3 +543,24 @@ public class RegistryProtocol implements Protocol {
         }
     }
 }
+
+
+
+/*
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
+public class RegistryFactory$Adpative implements com.alibaba.dubbo.registry.RegistryFactory {
+    public com.alibaba.dubbo.registry.Registry getRegistry(com.alibaba.dubbo.common.URL arg0) {
+
+        if (arg0 == null) throw new IllegalArgumentException("url == null");
+
+        com.alibaba.dubbo.common.URL url = arg0;
+        String extName = ( url.getProtocol() == null ? "dubbo" : url.getProtocol() );
+
+        if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.registry.RegistryFactory) name from url(" + url.toString() + ") use keys([protocol])");
+
+        com.alibaba.dubbo.registry.RegistryFactory extension = (com.alibaba.dubbo.registry.RegistryFactory)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.registry.RegistryFactory.class).getExtension(extName);
+
+        return extension.getRegistry(arg0);
+    }
+}
+ */

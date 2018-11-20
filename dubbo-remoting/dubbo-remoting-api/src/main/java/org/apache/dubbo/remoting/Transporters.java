@@ -51,8 +51,12 @@ public class Transporters {
         if (handlers.length == 1) {
             handler = handlers[0];
         } else {
+            // 如果有多个handler的话，需要使用分发器包装下
             handler = new ChannelHandlerDispatcher(handlers);
         }
+
+        //getTransporter()获取一个自适应的Transporter
+        //然后调用bind方法（默认是NettyTransporter的bind方法）
         return getTransporter().bind(url, handler);
     }
 
@@ -75,8 +79,40 @@ public class Transporters {
         return getTransporter().connect(url, handler);
     }
 
+    // 自动生成自适应的Transport类
+    // 代码见文件末尾
     public static Transporter getTransporter() {
         return ExtensionLoader.getExtensionLoader(Transporter.class).getAdaptiveExtension();
     }
 
 }
+
+/*
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
+public class Transporter$Adpative implements com.alibaba.dubbo.remoting.Transporter {
+    public com.alibaba.dubbo.remoting.Server bind(com.alibaba.dubbo.common.URL arg0, com.alibaba.dubbo.remoting.ChannelHandler arg1) throws com.alibaba.dubbo.common.URL {
+        if (arg0 == null) throw new IllegalArgumentException("url == null");
+        com.alibaba.dubbo.common.URL url = arg0;
+        //Server默认使用netty
+        String extName = url.getParameter("server", url.getParameter("transporter", "netty"));
+        if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.remoting.Transporter) name from url(" + url.toString() + ") use keys([server, transporter])");
+        //获取到一个NettyTransporter
+        com.alibaba.dubbo.remoting.Transporter extension = (com.alibaba.dubbo.remoting.Transporter)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.remoting.Transporter.class).getExtension(extName);
+        //调用NettyTransporter的bind方法
+        return extension.bind(arg0, arg1);
+    }
+
+    public com.alibaba.dubbo.remoting.Client connect(com.alibaba.dubbo.common.URL arg0, com.alibaba.dubbo.remoting.ChannelHandler arg1) throws com.alibaba.dubbo.common.URL {
+        if (arg0 == null) throw new IllegalArgumentException("url == null");
+        com.alibaba.dubbo.common.URL url = arg0;
+
+        String extName = url.getParameter("client", url.getParameter("transporter", "netty"));
+
+        if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.remoting.Transporter) name from url(" + url.toString() + ") use keys([client, transporter])");
+
+        com.alibaba.dubbo.remoting.Transporter extension = (com.alibaba.dubbo.remoting.Transporter)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.remoting.Transporter.class).getExtension(extName);
+
+        return extension.connect(arg0, arg1);
+    }
+}
+ */

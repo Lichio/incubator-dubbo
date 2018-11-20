@@ -22,6 +22,8 @@ import org.apache.dubbo.common.extension.Adaptive;
 import org.apache.dubbo.common.extension.SPI;
 
 /**
+ * 参数验证扩展点
+ *
  * Validation
  */
 @SPI("jvalidation")

@@ -25,6 +25,11 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
+ * 用来标注在接口的某个实现上，表示这个实现并不是提供具体业务支持，而是作为该接口的适配器
+ *
+ * 为了能够适配一个接口的各种实现，便有了adaptive extension这一说。
+ * 对一个接口实现的适配器Dubbo提供两种途径，第一种途径是对某个接口实现对应的适配器（注解在类上），第二种是Dubbo框架动态生成适配器类（注解在方法上）。
+ *
  * Provide helpful information for {@link ExtensionLoader} to inject dependency extension instance.
  *
  * @see ExtensionLoader

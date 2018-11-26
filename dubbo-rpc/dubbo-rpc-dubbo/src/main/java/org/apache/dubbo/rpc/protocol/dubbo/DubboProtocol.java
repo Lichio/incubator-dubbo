@@ -79,6 +79,7 @@ public class DubboProtocol extends AbstractProtocol {
         @Override
         public CompletableFuture<Object> reply(ExchangeChannel channel, Object message) throws RemotingException {
             if (message instanceof Invocation) {
+                // Invocation中保存着方法名等
                 Invocation inv = (Invocation) message;
                 Invoker<?> invoker = getInvoker(channel, inv);
                 // need to consider backward-compatibility if it's a callback
@@ -111,6 +112,7 @@ public class DubboProtocol extends AbstractProtocol {
                     rpcContext.setAsyncContext(new AsyncContextImpl(future));
                 }
                 rpcContext.setRemoteAddress(channel.getRemoteAddress());
+                // 执行调用，返回结果
                 Result result = invoker.invoke(inv);
 
                 if (result instanceof AsyncRpcResult) {
@@ -223,6 +225,7 @@ public class DubboProtocol extends AbstractProtocol {
         }
         String serviceKey = serviceKey(port, path, inv.getAttachments().get(Constants.VERSION_KEY), inv.getAttachments().get(Constants.GROUP_KEY));
 
+        // 从之前缓存的exporterMap中查找Exporter
         DubboExporter<?> exporter = (DubboExporter<?>) exporterMap.get(serviceKey);
 
         if (exporter == null) {
@@ -394,9 +397,11 @@ public class DubboProtocol extends AbstractProtocol {
 
     private ExchangeClient[] getClients(URL url) {
         // whether to share connection
+        // 是否共享连接
         boolean service_share_connect = false;
         int connections = url.getParameter(Constants.CONNECTIONS_KEY, 0);
         // if not configured, connection is shared, otherwise, one connection for one service
+        //如果connections不配置，则共享连接，否则一个服务对应一个连接
         if (connections == 0) {
             service_share_connect = true;
             connections = 1;
@@ -404,6 +409,7 @@ public class DubboProtocol extends AbstractProtocol {
 
         ExchangeClient[] clients = new ExchangeClient[connections];
         for (int i = 0; i < clients.length; i++) {
+            // 没有配置connections，就使用getSharedClient，getSharedClient中先去缓存中查找，没有的话就会新建，调用initClient方法
             if (service_share_connect) {
                 clients[i] = getSharedClient(url);
             } else {
@@ -464,9 +470,12 @@ public class DubboProtocol extends AbstractProtocol {
         ExchangeClient client;
         try {
             // connection should be lazy
+            // 如果lazy属性没有配置为true（我们没有配置，默认为false）ExchangeClient会马上和服务端建立连接
+            // 设置连接应该是lazy的
             if (url.getParameter(Constants.LAZY_CONNECT_KEY, false)) {
                 client = new LazyConnectExchangeClient(url, requestHandler);
             } else {
+                // 立即和服务端建立连接
                 client = Exchangers.connect(url, requestHandler);
             }
         } catch (RemotingException e) {

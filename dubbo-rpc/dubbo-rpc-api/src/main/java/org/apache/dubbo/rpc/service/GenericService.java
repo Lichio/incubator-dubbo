@@ -17,6 +17,8 @@
 package org.apache.dubbo.rpc.service;
 
 /**
+ * 泛化接口调用方式主要用于客户端没有 API 接口及模型类元的情况，参数及返回值中的所有 POJO 均用 Map 表示，通常用于框架集成
+ *
  * Generic service interface
  *
  * @export

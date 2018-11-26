@@ -66,6 +66,10 @@ public class RegistryProtocol implements Protocol {
     //providerurl <--> exporter
     private final Map<String, ExporterChangeableWrapper<?>> bounds = new ConcurrentHashMap<String, ExporterChangeableWrapper<?>>();
     private Cluster cluster;
+
+    // 扩展点的自动装配
+    // 当使用ExtensionLoader加载RegistryProtocol的时候，发现RegistryProtocol依赖Protocol类型的扩展点，则进行自动装配
+    // 自动装配的对象为 ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension()，该对象缓存在ExtensionLoader中
     private Protocol protocol;
 
     /**
@@ -298,7 +302,9 @@ public class RegistryProtocol implements Protocol {
     @SuppressWarnings("unchecked")
     public <T> Invoker<T> refer(Class<T> type, URL url) throws RpcException {
         url = url.setProtocol(url.getParameter(Constants.REGISTRY_KEY, Constants.DEFAULT_REGISTRY)).removeParameter(Constants.REGISTRY_KEY);
+        // 根据url获取Registry对象
         Registry registry = registryFactory.getRegistry(url);
+        // 判断引用是否是注册中心RegistryService，如果是直接返回刚得到的注册中心服务
         if (RegistryService.class.equals(type)) {
             return proxyFactory.getInvoker((T) registry, type, url);
         }
@@ -306,12 +312,15 @@ public class RegistryProtocol implements Protocol {
         // group="a,b" or group="*"
         Map<String, String> qs = StringUtils.parseQueryString(url.getParameterAndDecoded(Constants.REFER_KEY));
         String group = qs.get(Constants.GROUP_KEY);
+        // 判断引用服务是否需要合并不同实现的返回结果
         if (group != null && group.length() > 0) {
             if ((Constants.COMMA_SPLIT_PATTERN.split(group)).length > 1
                     || "*".equals(group)) {
+                // 使用默认的分组聚合集群策略 mergeable
                 return doRefer(getMergeableCluster(), registry, type, url);
             }
         }
+        //  选择配置的集群策略（如cluster="failback"）或者默认策略
         return doRefer(cluster, registry, type, url);
     }
 
@@ -320,22 +329,34 @@ public class RegistryProtocol implements Protocol {
     }
 
     private <T> Invoker<T> doRefer(Cluster cluster, Registry registry, Class<T> type, URL url) {
+        // 初始化Directory
+        // 组装Directory，可以看成一个消费端的List，可以随着注册中心的消息推送而动态的变化服务的Invoker
+        // 封装了所有服务真正引用逻辑，覆盖配置，路由规则等逻辑
+        // 初始化时只需要向注册中心发起订阅请求，其他逻辑均是异步处理，包括服务的引用等
+        // 缓存接口所有的提供者端Invoker以及注册中心接口相关的配置等
         RegistryDirectory<T> directory = new RegistryDirectory<T>(type, url);
         directory.setRegistry(registry);
         directory.setProtocol(protocol);
         // all attributes of REFER_KEY
         Map<String, String> parameters = new HashMap<String, String>(directory.getUrl().getParameters());
+        // 订阅者，即消费者url
         URL subscribeUrl = new URL(Constants.CONSUMER_PROTOCOL, parameters.remove(Constants.REGISTER_IP_KEY), 0, type.getName(), parameters);
         if (!Constants.ANY_VALUE.equals(url.getServiceInterface())
                 && url.getParameter(Constants.REGISTER_KEY, true)) {
+            // 到注册中心的consumer目录下注册服务消费者信息
             registry.register(subscribeUrl.addParameters(Constants.CATEGORY_KEY, Constants.CONSUMERS_CATEGORY,
                     Constants.CHECK_KEY, String.valueOf(false)));
         }
+        // 订阅服务
+        // 有服务提供的时候，注册中心会推送服务消息给消费者，消费者再进行服务的引用。
         directory.subscribe(subscribeUrl.addParameter(Constants.CATEGORY_KEY,
                 Constants.PROVIDERS_CATEGORY
                         + "," + Constants.CONFIGURATORS_CATEGORY
                         + "," + Constants.ROUTERS_CATEGORY));
 
+        // 服务的引用与变更全部由Directory异步完成
+        // 集群策略会将Directory伪装成一个Invoker返回
+        // 合并所有相同的invoker
         Invoker invoker = cluster.join(directory);
         ProviderConsumerRegTable.registerConsumer(invoker, url, subscribeUrl, directory);
         return invoker;

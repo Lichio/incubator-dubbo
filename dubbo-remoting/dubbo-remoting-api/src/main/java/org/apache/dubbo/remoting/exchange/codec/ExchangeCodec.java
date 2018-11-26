@@ -259,6 +259,8 @@ public class ExchangeCodec extends TelnetCodec {
     protected void encodeResponse(Channel channel, ChannelBuffer buffer, Response res) throws IOException {
         int savedWriteIndex = buffer.writerIndex();
         try {
+            // 序列化方式
+            // 根据SPI扩展来获取，url中没有指定则默认使用hessian2
             Serialization serialization = getSerialization(channel);
             // header.
             byte[] header = new byte[HEADER_LENGTH];
@@ -266,7 +268,7 @@ public class ExchangeCodec extends TelnetCodec {
             Bytes.short2bytes(MAGIC, header);
             // set request and serialization flag.
             header[2] = serialization.getContentTypeId();
-            if (res.isHeartbeat()) {
+            if (res.isHeartbeat()) { // 心跳消息还是正常消息
                 header[2] |= FLAG_EVENT;
             }
             // set response status.
@@ -295,10 +297,13 @@ public class ExchangeCodec extends TelnetCodec {
             bos.flush();
             bos.close();
 
+            // 写出去的消息的长度
             int len = bos.writtenBytes();
+            // 查看消息长度是否过长
             checkPayload(channel, len);
             Bytes.int2bytes(len, header, 12);
             // write
+            // 重置写入的位置
             buffer.writerIndex(savedWriteIndex);
             buffer.writeBytes(header); // write header.
             buffer.writerIndex(savedWriteIndex + HEADER_LENGTH + len);
@@ -306,6 +311,7 @@ public class ExchangeCodec extends TelnetCodec {
             // clear buffer
             buffer.writerIndex(savedWriteIndex);
             // send error message to Consumer, otherwise, Consumer will wait till timeout.
+            // 发送失败信息给Consumer，否则Consumer只能等超时了
             if (!res.isEvent() && res.getStatus() != Response.BAD_RESPONSE) {
                 Response r = new Response(res.getId(), res.getVersion());
                 r.setStatus(Response.BAD_RESPONSE);

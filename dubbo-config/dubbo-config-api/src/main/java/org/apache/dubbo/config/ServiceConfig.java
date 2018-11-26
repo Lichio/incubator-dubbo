@@ -956,8 +956,9 @@ public class Protocol$Adpative implements com.alibaba.dubbo.rpc.Protocol {
 首先获取 Invoker 的url，URL中获取Protocol的protocol属性的值，看是否进行了设置，默认为 dubbo，然后再调用 dubbo SPI
 （ExtensionLoader）机制中的getExtension方法，把 Key 传入进去，以达到自动获取Protocol的目的，然后找到真正的实现类，
 再调用其export方法。如果采用zk作为注册中心，通过配置<dubbo:registry address="zookeeper://localhost:2181" />
-这样取得的key是就是registry，真正的实现类则是
+这样取得的key是就是registry，真正的实现类依次是
 ProtocolListenerWrapper -> ProtocolFilterWrapper -> RegistryProtocol
+因为ProtocolListenerWrapper、ProtocolFilterWrapper是Protocol的包装类，在进行扩展点加载时会进行自动包装
  */
 
 /*

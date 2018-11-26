@@ -74,22 +74,29 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
         inv.setAttachment(Constants.VERSION_KEY, version);
 
         ExchangeClient currentClient;
+        // 在初始化的时候，引用服务的过程中会保存连接到服务端的Client
+        // 见DubboProtocol#refer(Class, URL)方法
+        // 如果共享连接，currentClient是ReferenceCountExchangeClient实例
+        // 如果不共享连接，currentClient是HeaderExchangeClient实例
+        // 而ReferenceCountExchangeClient依赖HeaderExchangeClient，所以最终调用的都是HeaderExchangeClient中的方法
         if (clients.length == 1) {
             currentClient = clients[0];
         } else {
             currentClient = clients[index.getAndIncrement() % clients.length];
         }
         try {
+            // 异步标志
             boolean isAsync = RpcUtils.isAsync(getUrl(), invocation);
             boolean isAsyncFuture = RpcUtils.isGeneratedFuture(inv) || RpcUtils.isFutureReturnType(inv);
+            // 单向标志
             boolean isOneway = RpcUtils.isOneway(getUrl(), invocation);
             int timeout = getUrl().getMethodParameter(methodName, Constants.TIMEOUT_KEY, Constants.DEFAULT_TIMEOUT);
-            if (isOneway) {
+            if (isOneway) { // 单向，发送完不管结果
                 boolean isSent = getUrl().getMethodParameter(methodName, Constants.SENT_KEY, false);
                 currentClient.send(inv, isSent);
                 RpcContext.getContext().setFuture(null);
                 return new RpcResult();
-            } else if (isAsync) {
+            } else if (isAsync) { // 异步，发送完需要获取future，之后从future中获取结果
                 ResponseFuture future = currentClient.request(inv, timeout);
                 // For compatibility
                 FutureAdapter<Object> futureAdapter = new FutureAdapter<>(future);
@@ -103,8 +110,9 @@ public class DubboInvoker<T> extends AbstractInvoker<T> {
                     result = new SimpleAsyncRpcResult(futureAdapter, futureAdapter.getResultFuture(), false);
                 }
                 return result;
-            } else {
+            } else { // 同步调用，必须等待调用结果返回
                 RpcContext.getContext().setFuture(null);
+                // ReferenceCountExchangeClient | HeaderExchangeClient
                 return (Result) currentClient.request(inv, timeout).get();
             }
         } catch (TimeoutException e) {

@@ -132,6 +132,11 @@ public class ZookeeperRegistry extends FailbackRegistry {
         }
     }
 
+    /**
+     *
+     * @param url 订阅者的url
+     * @param listener
+     */
     @Override
     protected void doSubscribe(final URL url, final NotifyListener listener) {
         try {
@@ -187,12 +192,16 @@ public class ZookeeperRegistry extends FailbackRegistry {
                         });
                         zkListener = listeners.get(listener);
                     }
+                    // 创建节点（如果已创建则直接返回）并监听节点变化
+                    // 当有变化时注册中心会通知消费者刷新本地缓存
                     zkClient.create(path, false);
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
                         urls.addAll(toUrlsWithEmpty(url, path, children));
                     }
                 }
+                // url   消费者url
+                // urls  提供者urls
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {
@@ -303,7 +312,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 provider = URL.decode(provider);
                 if (provider.contains(Constants.PROTOCOL_SEPARATOR)) {
                     URL url = URL.valueOf(provider);
-                    if (UrlUtils.isMatch(consumer, url)) {
+                    if (UrlUtils.isMatch(consumer, url)) { // 检查消费接口和提供接口是否匹配
                         urls.add(url);
                     }
                 }

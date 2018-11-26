@@ -27,6 +27,9 @@ import org.apache.dubbo.common.utils.NetUtils;
 import org.apache.dubbo.common.utils.StringUtils;
 import org.apache.dubbo.config.annotation.Reference;
 import org.apache.dubbo.config.support.Parameter;
+import org.apache.dubbo.registry.integration.RegistryDirectory;
+import org.apache.dubbo.registry.support.AbstractRegistry;
+import org.apache.dubbo.registry.support.FailbackRegistry;
 import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.Protocol;
 import org.apache.dubbo.rpc.ProxyFactory;
@@ -69,8 +72,18 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      */
     private static final Protocol refprotocol = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
+    /**
+     * 生成一个Cluster代理对象，代理对象的代码是自动生成的，通过
+     * @see ExtensionLoader#createAdaptiveExtensionClassCode() 方法生成代码
+     * 生成的代码见该类末尾
+     */
     private static final Cluster cluster = ExtensionLoader.getExtensionLoader(Cluster.class).getAdaptiveExtension();
 
+    /**
+     * 生成一个ProxyFactory代理对象，代理对象的代码是自动生成的，通过
+     * @see ExtensionLoader#createAdaptiveExtensionClassCode() 方法生成代码
+     * 生成的代码见该类末尾
+     */
     private static final ProxyFactory proxyFactory = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
     private final List<URL> urls = new ArrayList<URL>();
     // interface name
@@ -314,23 +327,31 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      * 先暴露registry://协议头，则调用RegistryProtocol
      * 再暴露dubbo://协议，则调用DubboProtocol
      *
-     * 先通过RegistryProtocol
+     * 1.先通过RegistryProtocol
      * @see org.apache.dubbo.registry.integration.RegistryProtocol
      * 的refer()方法
      * @see org.apache.dubbo.registry.integration.RegistryProtocol#refer(Class, URL)
      * 获取提供者URL
      *
-     * 再调用DubboProtocol（hessian、http、rmi…）
+     * 2.再调用DubboProtocol（hessian、http、rmi…）
      * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol
      * 的refer()方法
      * @see org.apache.dubbo.rpc.protocol.dubbo.DubboProtocol#refer(Class, URL)
      * 获取提供者引用
      *
-     * 最后RegistryProtocol通过Cluster扩展点
+     * 3.最后RegistryProtocol通过Cluster扩展点
      * @see org.apache.dubbo.rpc.cluster.Cluster
      * 的join()方法
      * @see org.apache.dubbo.rpc.cluster.Cluster#join(Directory)
-     * 将多个提供者引用伪装成一个提供者引用返回（实现路由及负载均衡）
+     * 将多个提供者引用（被封装成多个服务消费Invoker）伪装成一个提供者引用返回（被封装成一个集群Invoker）
+     *
+     * 1 -> 2 调用链：
+     * @see org.apache.dubbo.registry.integration.RegistryDirectory#subscribe(URL)
+     * @see FailbackRegistry#notify(org.apache.dubbo.common.URL, org.apache.dubbo.registry.NotifyListener, java.util.List)
+     * @see AbstractRegistry#notify(org.apache.dubbo.common.URL, org.apache.dubbo.registry.NotifyListener, java.util.List)
+     * @see RegistryDirectory#notify(java.util.List)
+     * @see RegistryDirectory#refreshInvoker(java.util.List)
+     * @see RegistryDirectory#toInvokers(java.util.List)
      */
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
@@ -347,14 +368,16 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             isJvmRefer = isInjvm();
         }
 
-        if (isJvmRefer) {
+        if (isJvmRefer) { // 本地调用
             URL url = new URL(Constants.LOCAL_PROTOCOL, NetUtils.LOCALHOST, 0, interfaceClass.getName()).addParameters(map);
             invoker = refprotocol.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
                 logger.info("Using injvm service " + interfaceClass.getName());
             }
         } else {
-            if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
+            // user specified URL, could be peer-to-peer address, or register center's address.
+            // 用户指定调用地址
+            if (url != null && url.length() > 0) {
                 String[] us = Constants.SEMICOLON_SPLIT_PATTERN.split(url);
                 if (us != null && us.length > 0) {
                     for (String u : us) {
@@ -369,7 +392,10 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                         }
                     }
                 }
-            } else { // assemble URL from register center's configuration
+            }
+            // assemble URL from register center's configuration
+            // 从注册中心获取调用地址
+            else {
                 List<URL> us = loadRegistries(false);
                 if (us != null && !us.isEmpty()) {
                     for (URL u : us) {
@@ -392,7 +418,6 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 URL registryURL = null;
                 for (URL url : urls) {
                     // 根据扩展点的自适应机制，会根据协议名选择调用具体的实现类
-                    // 这里我们需要调用DubboProtocol的refer方法
                     invokers.add(refprotocol.refer(interfaceClass, url));
                     if (Constants.REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                         registryURL = url; // use last registry url
@@ -560,3 +585,55 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     }
 
 }
+
+
+/*
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
+public class Cluster$Adpative implements com.alibaba.dubbo.rpc.cluster.Cluster {
+
+  public com.alibaba.dubbo.rpc.Invoker join(com.alibaba.dubbo.rpc.cluster.Directory arg0) throws com.alibaba.dubbo.rpc.cluster.Directory {
+    if (arg0 == null) throw new IllegalArgumentException("com.alibaba.dubbo.rpc.cluster.Directory argument == null");
+
+    if (arg0.getUrl() == null) throw new IllegalArgumentException("com.alibaba.dubbo.rpc.cluster.Directory argument getUrl() == null");com.alibaba.dubbo.common.URL url = arg0.getUrl();
+
+    String extName = url.getParameter("cluster", "failover");
+    if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.rpc.cluster.Cluster) name from url(" + url.toString() + ") use keys([cluster])");
+
+    com.alibaba.dubbo.rpc.cluster.Cluster extension = (com.alibaba.dubbo.rpc.cluster.Cluster)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.cluster.Cluster.class).getExtension(extName);
+
+    return extension.join(arg0);
+  }
+}
+ */
+
+/*
+import com.alibaba.dubbo.common.extension.ExtensionLoader;
+public class ProxyFactory$Adpative implements com.alibaba.dubbo.rpc.ProxyFactory {
+
+  public java.lang.Object getProxy(com.alibaba.dubbo.rpc.Invoker arg0) throws com.alibaba.dubbo.rpc.Invoker {
+    if (arg0 == null) throw new IllegalArgumentException("com.alibaba.dubbo.rpc.Invoker argument == null");
+
+    if (arg0.getUrl() == null) throw new IllegalArgumentException("com.alibaba.dubbo.rpc.Invoker argument getUrl() == null");com.alibaba.dubbo.common.URL url = arg0.getUrl();
+
+    String extName = url.getParameter("proxy", "javassist");
+    if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.rpc.ProxyFactory) name from url(" + url.toString() + ") use keys([proxy])");
+
+    com.alibaba.dubbo.rpc.ProxyFactory extension = (com.alibaba.dubbo.rpc.ProxyFactory)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.ProxyFactory.class).getExtension(extName);
+
+    return extension.getProxy(arg0);
+  }
+
+  public com.alibaba.dubbo.rpc.Invoker getInvoker(java.lang.Object arg0, java.lang.Class arg1, com.alibaba.dubbo.common.URL arg2) throws java.lang.Object {
+    if (arg2 == null) throw new IllegalArgumentException("url == null");
+
+    com.alibaba.dubbo.common.URL url = arg2;
+    String extName = url.getParameter("proxy", "javassist");
+
+    if(extName == null) throw new IllegalStateException("Fail to get extension(com.alibaba.dubbo.rpc.ProxyFactory) name from url(" + url.toString() + ") use keys([proxy])");
+
+    com.alibaba.dubbo.rpc.ProxyFactory extension = (com.alibaba.dubbo.rpc.ProxyFactory)ExtensionLoader.getExtensionLoader(com.alibaba.dubbo.rpc.ProxyFactory.class).getExtension(extName);
+
+    return extension.getInvoker(arg0, arg1, arg2);
+  }
+}
+ */

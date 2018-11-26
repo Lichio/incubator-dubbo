@@ -297,11 +297,14 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Subscribe: " + url);
         }
+        // 根据url获取已注册的监听器
         Set<NotifyListener> listeners = subscribed.get(url);
+        // 没有监听器，就创建，并添加进去
         if (listeners == null) {
             subscribed.putIfAbsent(url, new ConcurrentHashSet<NotifyListener>());
             listeners = subscribed.get(url);
         }
+        // 有监听器，直接把当前RegistryDirectory添加进去
         listeners.add(listener);
     }
 
@@ -388,6 +391,9 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
+
+        // 不同类型的数据分开通知（将providers，consumers，routers，overrides数据分开，放入result中）
+        // 允许只通知其中一种类型，但该类型的数据必须是全量的，不是增量的。
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
         for (URL u : urls) {
             if (UrlUtils.isMatch(url, u)) {
@@ -408,11 +414,14 @@ public abstract class AbstractRegistry implements Registry {
             notified.putIfAbsent(url, new ConcurrentHashMap<String, List<URL>>());
             categoryNotified = notified.get(url);
         }
+
+        // 分类通知
         for (Map.Entry<String, List<URL>> entry : result.entrySet()) {
             String category = entry.getKey();
             List<URL> categoryList = entry.getValue();
             categoryNotified.put(category, categoryList);
             saveProperties(url);
+            // 这里的listener是RegistryDirectory
             listener.notify(categoryList);
         }
     }

@@ -25,16 +25,34 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 
 /**
+ * Java动态代理，每一个动态代理类都必须要实现InvocationHandler这个接口，并且每一个代理类的实例都关联到了一个handler，
+ * 当我们通过代理对象调用一个方法的时候，这个方法就会被转发为由实现了InvocationHandler这个接口的类的invoke方法来进行调用。
+ *
+ * 当调用helloService.sayHello();的时候，实际上会调用invoke()方法
  * InvokerHandler
  */
 public class InvokerInvocationHandler implements InvocationHandler {
 
+    /**
+     * invoker变量的值来自ReferenceConfig的createProxy()方法中的proxyFactory.getProxy(Invoker<T> invoker)，
+     * 在ReferenceConfig中，invoker变量的值最终由cluster.join()方法获得，根据扩展点的自适应加载和自动包装，
+     * cluster的执行类为MockClusterWrapper（包装类） -> FailoverCluster（默认值，根据配置变化），
+     * 返回的Invoker类为MockClusterInvoker（包装类） -> FailoverClusterInvoker（默认值，根据配置变化）
+     **/
     private final Invoker<?> invoker;
 
     public InvokerInvocationHandler(Invoker<?> handler) {
         this.invoker = handler;
     }
 
+    /**
+     *
+     * @param proxy 代理类对象
+     * @param method 需要调用的方法
+     * @param args 方法参数
+     * @return
+     * @throws Throwable
+     */
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
         String methodName = method.getName();
@@ -67,6 +85,8 @@ public class InvokerInvocationHandler implements InvocationHandler {
                 invocation.setAttachment(Constants.ASYNC_KEY, "true");
             }
         }
+
+        // 此处的invoker为MockClusterInvoker
         return invoker.invoke(invocation).recreate();
     }
 

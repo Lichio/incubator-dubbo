@@ -190,10 +190,10 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         channel.setAttribute(KEY_READ_TIMESTAMP, System.currentTimeMillis());
         final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
         try {
-            if (message instanceof Request) {
+            if (message instanceof Request) { //处理request类型的消息
                 // handle request.
                 Request request = (Request) message;
-                if (request.isEvent()) {
+                if (request.isEvent()) { // 判断是否是事件请求（如心跳请求）
                     handlerEvent(channel, request);
                 } else {
                     if (request.isTwoWay()) {
@@ -202,19 +202,20 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
                         handler.received(exchangeChannel, request.getData());
                     }
                 }
-            } else if (message instanceof Response) {
+            } else if (message instanceof Response) {  //处理response类型的消息
                 handleResponse(channel, (Response) message);
             } else if (message instanceof String) {
                 if (isClientSide(channel)) {
                     Exception e = new Exception("Dubbo client can not supported string message: " + message + " in channel: " + channel + ", url: " + channel.getUrl());
                     logger.error(e.getMessage(), e);
-                } else {
+                } else { // //处理telnet类型的消息
                     String echo = handler.telnet(channel, (String) message);
                     if (echo != null && echo.length() > 0) {
                         channel.send(echo);
                     }
                 }
             } else {
+                // handler是DubboProtocol中的new的一个ExchangeHandlerAdapter
                 handler.received(exchangeChannel, message);
             }
         } finally {

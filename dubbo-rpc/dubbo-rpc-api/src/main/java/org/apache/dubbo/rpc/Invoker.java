@@ -22,6 +22,10 @@ import org.apache.dubbo.common.Node;
  * 可执行的对象，执行具体的远程调用，能够根据方法名称，参数得到相应的执行结果。
  * Invocation：包含了需要执行的方法，参数等信息。目前实现类只有RpcInvocation。
  *
+ * 1.服务提供Invoker：AbstractProxyInvoker的实例（本地执行）
+ * 2.服务消费Invoker：DubboInvoker、InjvmInvoker的实例（远程通信执行）
+ * 3.集群Invoker：FailoverClusterInvoker、FailfastClusterInvoker等（多个远程通信Invoker聚合而成）
+ *
  * Invoker. (API/SPI, Prototype, ThreadSafe)
  *
  * @see org.apache.dubbo.rpc.Protocol#refer(Class, org.apache.dubbo.common.URL)

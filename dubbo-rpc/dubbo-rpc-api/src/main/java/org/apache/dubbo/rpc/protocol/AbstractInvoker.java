@@ -153,6 +153,7 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
 
         try {
+            // 这里是服务消费Invoker（如DubboInvoker）
             return doInvoke(invocation);
         } catch (InvocationTargetException e) { // biz exception
             Throwable te = e.getTargetException();

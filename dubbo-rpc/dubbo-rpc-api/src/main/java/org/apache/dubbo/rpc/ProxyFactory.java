@@ -23,7 +23,7 @@ import org.apache.dubbo.common.extension.SPI;
 
 /**
  * 动态代理扩展点
- * 将 Invoker 接口转换成业务接口
+ * {Invoker接口}与{业务接口}之间的转换
  *
  * ProxyFactory. (API/SPI, Singleton, ThreadSafe)
  */

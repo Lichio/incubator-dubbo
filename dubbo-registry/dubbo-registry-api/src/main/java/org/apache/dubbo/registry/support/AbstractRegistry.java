@@ -304,7 +304,7 @@ public abstract class AbstractRegistry implements Registry {
             subscribed.putIfAbsent(url, new ConcurrentHashSet<NotifyListener>());
             listeners = subscribed.get(url);
         }
-        // 有监听器，直接把当前RegistryDirectory添加进去
+        // 有监听器，直接把当前监听器RegistryDirectory添加进去
         listeners.add(listener);
     }
 
@@ -392,7 +392,7 @@ public abstract class AbstractRegistry implements Registry {
             logger.info("Notify urls for subscribe url " + url + ", urls: " + urls);
         }
 
-        // 不同类型的数据分开通知（将providers，consumers，routers，overrides数据分开，放入result中）
+        // 不同类型的数据分开通知（将providers，routers，overrides数据分开，放入result中）
         // 允许只通知其中一种类型，但该类型的数据必须是全量的，不是增量的。
         Map<String, List<URL>> result = new HashMap<String, List<URL>>();
         for (URL u : urls) {

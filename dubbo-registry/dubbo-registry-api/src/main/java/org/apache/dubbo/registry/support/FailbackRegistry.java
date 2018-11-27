@@ -192,6 +192,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     @Override
     public void subscribe(URL url, NotifyListener listener) {
         super.subscribe(url, listener);
+        // 移除失败的订阅
         removeFailedSubscribed(url, listener);
         try {
             // Sending a subscription request to the server side

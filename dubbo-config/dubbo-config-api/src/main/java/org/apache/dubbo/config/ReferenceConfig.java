@@ -428,6 +428,9 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                     URL u = registryURL.addParameter(Constants.CLUSTER_KEY, AvailableCluster.NAME);
                     invoker = cluster.join(new StaticDirectory(u, invokers));
                 } else { // not a registry url
+                    // 每个注册中心对应一个invoker，将多个注册中心invoker（此处的invokers）封装到一个StaticDirectory中，然后伪装成一个invoker(此处最终返回的invoker)
+                    // 每个提供者url对应一个invoker，将多个提供者url invoker封装到一个RegistryDirectory中，伪装成一个注册中心invoker
+                    // （Directory借助Router完成路由功能）
                     invoker = cluster.join(new StaticDirectory(invokers));
                 }
             }

@@ -176,6 +176,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 }
             } else {
                 List<URL> urls = new ArrayList<URL>();
+                // 这里的path分别为providers，routers，configurators三种
+                // （在RegistryProtocol的doRefer方法中调用subscribe方法时进行了url的属性设置）
                 for (String path : toCategoriesPath(url)) {
                     ConcurrentMap<NotifyListener, ChildListener> listeners = zkListeners.get(url);
                     if (listeners == null) {
@@ -194,6 +196,7 @@ public class ZookeeperRegistry extends FailbackRegistry {
                     }
                     // 创建节点（如果已创建则直接返回）并监听节点变化
                     // 当有变化时注册中心会通知消费者刷新本地缓存
+                    // 创建节点即订阅服务
                     zkClient.create(path, false);
                     List<String> children = zkClient.addChildListener(path, zkListener);
                     if (children != null) {
@@ -202,6 +205,8 @@ public class ZookeeperRegistry extends FailbackRegistry {
                 }
                 // url   消费者url
                 // urls  提供者urls
+                // 最终会调用RegistryDirectory的notify方法
+                // 第一次注册完成后需要主动调用此方法获取注册中心的数据（providers，routers，configurators），之后则是监听器被触发时才执行
                 notify(url, listener, urls);
             }
         } catch (Throwable e) {

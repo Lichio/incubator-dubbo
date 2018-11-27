@@ -157,6 +157,7 @@ public class RegistryDirectory<T> extends AbstractDirectory<T> implements Notify
 
     public void subscribe(URL url) {
         setConsumerUrl(url);
+        // 第二个参数this，是变更事件监听器，不允许为空，RegistryDirectory实现了NotifyListener接口，因此是一个事件监听器
         registry.subscribe(url, this);
     }
 
